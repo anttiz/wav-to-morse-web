@@ -26,7 +26,7 @@ export default class Main {
       const ad = new AudioFile({ params: this.params!, file });
       await ad.processFile();
       // eslint-disable-next-line no-console
-      console.log(ad.getSecret());
+      console.log(ad.secret, ad.audioData);
     }
   }
 

@@ -14,10 +14,14 @@ export default class AudioFile {
     this.fileData = await processAudioFile(this.params);
   }
 
-  getSecret() {
+  get secret() {
     if (this.fileData) {
       return this.fileData.secret;
     }
     return '';
+  }
+
+  get audioData() {
+    return (this.fileData);
   }
 }
