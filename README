@@ -1,0 +1,6 @@
+npm i -D typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin
+npm i -D babel-loader @babel/cli @babel/core @babel/preset-env @babel/preset-typescript @babel/plugin-transform-runtime
+npm i -D eslint eslint-config-airbnb eslint-config-airbnb-typescript eslint-plugin-import eslint-plugin-jest eslint-plugin-jsx-a11y eslint-plugin-node eslint-plugin-react
+npm i -D webpack webpack-cli webpack-dev-server fork-ts-checker-webpack-plugin @types/fork-ts-checker-webpack-plugin html-webpack-plugin
+npm i -D ts-node
+npm i -D jest @types/jest
