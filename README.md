@@ -4,7 +4,7 @@ This is another solution to problem that is also solved in https://github.com/an
 
 <div align="center">
   <kbd>
-    <img src="./assets/screenshot2.png" />
+    <img src="./assets/screenshot0.png" />
     <img src="./assets/screenshot1.png" />
   </kbd>
 </div>
