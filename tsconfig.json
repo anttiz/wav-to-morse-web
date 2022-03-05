@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
-    "target": "ES6",
+    "outDir": "./dist",
+    "baseUrl": "./src",
+    "target": "es2019",
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

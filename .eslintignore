@@ -2,4 +2,6 @@ webpack.config.ts
 .eslintrc.js
 tailwind.config.js
 postcss.config.js
-
+babel.config.js
+tsconfig.test.json
+tsconfig.json

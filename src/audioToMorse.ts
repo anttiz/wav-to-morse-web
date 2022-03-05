@@ -1,5 +1,13 @@
 /* eslint-disable import/prefer-default-export */
-import { IAudioFileData, IAudioToMorseParams, IProcessFileParams, IValueAmount, MorseSequenceCharacter } from './types/sharedTypes';
+import {
+  IAudioFileChannelData,
+  IAudioFileData,
+  IAudioToMorseParams,
+  IMorseWithTime,
+  IProcessFileParams,
+  IValueAmount,
+  MorseSequenceCharacter,
+} from './types/sharedTypes';
 
 import morseCodes from './morse-codes.json';
 
@@ -26,16 +34,26 @@ let params: IAudioToMorseParams = {
  * Map given value, amount pair to correct MorseSequenceCharacter.
  *
  * @param {IValueAmount} va
+ * @param {number} index
+ * @param {number} sequenceLength
  * @param {number} maxBreakValue
  * @param {number} maxDahValue
  * @return {MorseSequenceCharacter}
  */
 function deductMorse(
   va: IValueAmount,
+  index: number,
+  sequenceLength: number,
   maxBreakValue: number,
   maxDahValue: number,
 ): MorseSequenceCharacter {
   if (va.value === 0) {
+    if (index === 0) {
+      return 'start';
+    }
+    if (index === sequenceLength - 1) {
+      return 'end';
+    }
     // within-character-break, character-break or word-break
     const proportion = va.amount / maxBreakValue;
     if (proportion < params.smallBreakPercentageOfWordBreak / 100) {
@@ -54,8 +72,32 @@ function deductMorse(
     ? 'dih' : 'dah';
 }
 
+/**
+ * Map given value, amount pair to correct MorseSequenceCharacter.
+ *
+ * @param {IValueAmount} va
+ * @param {number} index
+ * @param {number} sequenceLength
+ * @param {number} maxBreakValue
+ * @param {number} maxDahValue
+ * @return {MorseSequenceCharacter}
+ */
+function deductMorseWithTime(
+  va: IValueAmount,
+  index: number,
+  sequenceLength: number,
+  maxBreakValue: number,
+  maxDahValue: number,
+): IMorseWithTime {
+  const char = deductMorse(va, index, sequenceLength, maxBreakValue, maxDahValue);
+  return {
+    char,
+    amount: va.amount,
+  };
+}
+
 function toMorse(seq: IValueAmount[]) {
-  const currSeq = seq;
+  const currSeq = [...seq];
   // remove initial and end zeros (silence in the end and in the start)
   while (currSeq.length > 0 && currSeq[0].value === 0) currSeq.shift();
   while (currSeq.length > 0 && currSeq[currSeq.length - 1].value === 0) currSeq.pop();
@@ -69,7 +111,28 @@ function toMorse(seq: IValueAmount[]) {
   );
   // create morse sequence
   const morse: MorseSequenceCharacter[] = currSeq
-    .map((it) => deductMorse(it, maxBreakValue, maxDahValue));
+    .map((it, index) => deductMorse(it, index, currSeq.length, maxBreakValue, maxDahValue));
+  return morse;
+}
+
+function toMorseWithTime(seq: IValueAmount[]) {
+  const currSeq = [...seq];
+  // find out the maximum sound value length, this is the maximum of dah sound lengths
+  const maxDahValue = Math.max(
+    ...currSeq.filter((it) => it.value === 1).map((it) => it.amount),
+  );
+  const remSeq = [...currSeq];
+  // remove initial and end zeros (silence in the end and in the start)
+  while (remSeq.length > 0 && remSeq[0].value === 0) remSeq.shift();
+  while (remSeq.length > 0 && remSeq[remSeq.length - 1].value === 0) remSeq.pop();
+
+  // find out the maximum silence value length, this is the max of word breaks
+  const maxBreakValue = Math.max(
+    ...remSeq.filter((it) => it.value === 0).map((it) => it.amount),
+  );
+  // create morse sequence
+  const morse: IMorseWithTime[] = currSeq
+    .map((it, index) => deductMorseWithTime(it, index, currSeq.length, maxBreakValue, maxDahValue));
   return morse;
 }
 
@@ -187,25 +250,15 @@ async function readFile(file:File):Promise<ArrayBuffer> {
   });
 }
 
-/**
- * Processes audio file and returns decoded message as a string.
- *
- * @export
- * @param {IProcessFileParams} processParams
- * @return {Promise<IAudioFileData>}
- */
-export async function processAudioFile(processParams: IProcessFileParams): Promise<IAudioFileData> {
-  params = processParams.params;
-  const buf:ArrayBuffer = await readFile(processParams.file);
-  const audioCtx = new AudioContext();
-  const ab:AudioBuffer = await audioCtx.decodeAudioData(buf);
+export function setParams(audioParams: IAudioToMorseParams) {
+  params = audioParams;
+}
 
-  if (ab.numberOfChannels !== 1) {
-    throw new Error('Audio file does not seem valid');
-  }
-  const data:Float32Array = ab.getChannelData(0);
+export async function processChannelData(
+  data:Float32Array,
+  blockSize: number,
+):Promise<IAudioFileChannelData> {
   // divide data into x ms blocks.
-  const blockSize = Math.floor(ab.sampleRate / (1000 / params.sampleLengthMs));
   const initial:IBlockData = {
     current: [],
     all: [],
@@ -239,12 +292,40 @@ export async function processAudioFile(processParams: IProcessFileParams): Promi
     .reduce(valueAmountReducer, [] as IValueAmount[]);
   // convert sequence of dih and dah's into morse code
   const morse = toMorse(sequence);
+
+  const morseWithTime = toMorseWithTime(sequence);
   // convert morse code into text
   const secret = toPlainText(morse);
   return {
     secret,
-    file: processParams.file,
     morse,
+    morseWithTime,
+    sequence,
+  };
+}
+
+/**
+ * Processes audio file and returns decoded message as a string.
+ *
+ * @export
+ * @param {IProcessFileParams} processParams
+ * @return {Promise<IAudioFileData>}
+ */
+export async function processAudioFile(processParams: IProcessFileParams): Promise<IAudioFileData> {
+  setParams(processParams.params);
+  const buf:ArrayBuffer = await readFile(processParams.file);
+  const audioCtx = new AudioContext();
+  const ab:AudioBuffer = await audioCtx.decodeAudioData(buf);
+
+  if (ab.numberOfChannels !== 1) {
+    throw new Error('Audio file does not seem valid');
+  }
+  const data:Float32Array = ab.getChannelData(0);
+  const blockSize = Math.floor(ab.sampleRate / (1000 / params.sampleLengthMs));
+  const ad = await processChannelData(data, blockSize);
+  return {
+    ...ad,
+    file: processParams.file,
     ab,
     audioCtx,
   };

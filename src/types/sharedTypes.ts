@@ -16,12 +16,26 @@ export interface IValueAmount {
   amount: number;
 }
 
-export type MorseSequenceCharacter = 'cb' | 'wb' | 'dih' | 'dah' | '-';
+export type MorseSequenceCharacter = 'cb' | 'wb' | 'dih' | 'dah' | '-' | 'start' | 'end';
+
+export interface IMorseWithTime {
+  char: MorseSequenceCharacter;
+  amount: number;
+}
+
+export interface IAudioFileChannelData {
+  secret: string;
+  morse: MorseSequenceCharacter[];
+  morseWithTime: IMorseWithTime[];
+  sequence: IValueAmount[];
+}
 
 export interface IAudioFileData {
   secret: string;
   file: File;
   morse: MorseSequenceCharacter[];
+  morseWithTime: IMorseWithTime[];
   ab: AudioBuffer;
   audioCtx: AudioContext;
+  sequence: IValueAmount[];
 }
