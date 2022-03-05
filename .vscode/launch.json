@@ -11,6 +11,21 @@
       "name": "Launch Chrome against localhost",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest Current File",
+      "disableOptimisticBPs": true,
+      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+      "stopOnEntry": false,
+      "cwd": "${workspaceRoot}",
+      "preLaunchTask": null,
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "args": ["${fileBasenameNoExtension}"],
+      "sourceMaps": true
     }
   ]
 }

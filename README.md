@@ -11,12 +11,15 @@ This is another solution to problem that is also solved in https://github.com/an
 
 ## Description
 
-This web page takes WAV file as input (file can be dragged and dropped) and tries to find Morse code from inside of it. It outputs the finding as a string to Result box. It is also possible to play the file (ensure you have volume!).
+This web page takes WAV file as input (file can be dragged and dropped) and tries to find Morse code from inside of it. It outputs the finding as a string to the Result box. It is also possible to play the file (ensure you have volume!).
+
+This could have been solved also with React but I decided to learn something new and Lit framework using web components seemed to be a nice choice.
 
 ### Built with
 
-- Web components (Lit)
+- Web components (Lit framework)
 - TypeScript
+- Tailwind CSS
 - Unit testing with Jest
 - ESLint static linter
 
@@ -24,7 +27,7 @@ This web page takes WAV file as input (file can be dragged and dropped) and trie
 
 ### Prerequisites
 
-This has been mostly tested with MacOS Chrome and Safari.
+This has been mostly tested with MacOS and Chrome.
 
 ### Install
 
@@ -36,7 +39,7 @@ Just build TypeScript files into dist folder by command `npm run build`
 
 ### Usage
 
-Once build is successful, just open dist/index.html in the browser.
+Once build is successful, just open `dist/index.html` in the browser.
 Drag and drop input wav file to top-left box as in above pictures.
 ### Usage in development
 
