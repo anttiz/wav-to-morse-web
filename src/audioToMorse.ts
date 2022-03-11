@@ -26,6 +26,9 @@ let params: IAudioToMorseParams = {
   morseDihMaxPercentageOfDah: 45, // dih must be less than 45% of length of dah
   smallBreakPercentageOfWordBreak: 20, // small break must be less than 20% of word break
   charBreakPercentageOfWordBreak: 50, // char break must be less than 50% of word break
+  // following are used to check whether input is correct format containing only Morse code
+  soundMinDuration: 5, // 8 has been measured, dih about 80 ms
+  soundMaxDuration: 23, // 22 has been measured, dah about 220 ms
 };
 
 // internal functions
@@ -142,7 +145,7 @@ function toMorseWithTime(seq: IValueAmount[]) {
  * @param {string} code
  * @return {string}
  */
-function morseToChar(code: string):string {
+function morseToChar(code: string): string {
   const charKey = Object.keys(morseCodes)
     .find((mc) => morseCodes[mc as MorseCodeDataKey] === code);
   if (charKey) return charKey;
@@ -155,7 +158,7 @@ function morseToChar(code: string):string {
  * @param {MorseSequenceCharacter[]} arr
  * @return {string} Decoded message
  */
-function toPlainText(arr: MorseSequenceCharacter[]):string {
+function toPlainText(arr: MorseSequenceCharacter[]): string {
   const initial = {
     total: '',
     current: '',
@@ -240,7 +243,7 @@ const valueAmountReducer = (
   return acc;
 };
 
-async function readFile(file:File):Promise<ArrayBuffer> {
+async function readFile(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsArrayBuffer(file as Blob);
@@ -250,20 +253,35 @@ async function readFile(file:File):Promise<ArrayBuffer> {
   });
 }
 
+/**
+ * Validate Morse file to check whether it contains some valid Morse code
+ * @param sequence Sequence of 0 and 1 intervals
+ * @returns {boolean} Whether input file contains some valid Morse data
+ */
+function validateSequence(sequence: IValueAmount[]): boolean {
+  const minSoundLength = Math.min(
+    ...sequence.filter((it) => it.value === 1).map((it) => it.amount),
+  );
+  const maxSoundLength = Math.max(
+    ...sequence.filter((it) => it.value === 1).map((it) => it.amount),
+  );
+  return (minSoundLength >= params.soundMinDuration && maxSoundLength <= params.soundMaxDuration);
+}
+
 export function setParams(audioParams: IAudioToMorseParams) {
   params = audioParams;
 }
 
 export async function processChannelData(
-  data:Float32Array,
+  data: Float32Array,
   blockSize: number,
-):Promise<IAudioFileChannelData> {
+): Promise<IAudioFileChannelData> {
   // divide data into x ms blocks.
-  const initial:IBlockData = {
+  const initial: IBlockData = {
     current: [],
     all: [],
   };
-  const blockData:IBlockData = data.reduce((acc, curr) => {
+  const blockData: IBlockData = data.reduce((acc, curr) => {
     acc.current.push(curr);
     if (acc.current.length === blockSize) {
       acc.all.push(acc.current);
@@ -290,6 +308,8 @@ export async function processChannelData(
     // to make sequence shorter so we can use amount to detect
     // what kind of break or code that item is
     .reduce(valueAmountReducer, [] as IValueAmount[]);
+  // check if some valid message is found!
+  const valid = validateSequence(sequence);
   // convert sequence of dih and dah's into morse code
   const morse = toMorse(sequence);
 
@@ -297,6 +317,7 @@ export async function processChannelData(
   // convert morse code into text
   const secret = toPlainText(morse);
   return {
+    valid,
     secret,
     morse,
     morseWithTime,
@@ -313,14 +334,14 @@ export async function processChannelData(
  */
 export async function processAudioFile(processParams: IProcessFileParams): Promise<IAudioFileData> {
   setParams(processParams.params);
-  const buf:ArrayBuffer = await readFile(processParams.file);
+  const buf: ArrayBuffer = await readFile(processParams.file);
   const audioCtx = new AudioContext();
-  const ab:AudioBuffer = await audioCtx.decodeAudioData(buf);
+  const ab: AudioBuffer = await audioCtx.decodeAudioData(buf);
 
   if (ab.numberOfChannels !== 1) {
     throw new Error('Audio file does not seem valid');
   }
-  const data:Float32Array = ab.getChannelData(0);
+  const data: Float32Array = ab.getChannelData(0);
   const blockSize = Math.floor(ab.sampleRate / (1000 / params.sampleLengthMs));
   const ad = await processChannelData(data, blockSize);
   return {

@@ -35,6 +35,7 @@ export class AudioComponent extends LitElement {
         </div>
       `;
     }
+    const secret = this.audioData.valid ? this.audioData.secret : 'Could not decode message from file!';
     return html`
       <div class="flex basis-1/2 rounded-lg h-40 min-h-max m-2 border-2 border-gray-500 bg-white">
         <div class="flex flex-col">
@@ -44,7 +45,7 @@ export class AudioComponent extends LitElement {
           </div>
           <div class="flex basis1/2 p-1 flex-col">
             <span class="font-semibold">Secret:&nbsp;</span>
-            <span class="text-xs">${this.audioData.secret}</span>
+            <span class="text-xs">${secret}</span>
           </div>
         </div>
     `;

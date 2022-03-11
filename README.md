@@ -1,5 +1,8 @@
 # wav-to-morse-web
 Finds Morse code inside of WAV file and prints it.
+
+NOTE: If no valid code is found, a message is shown that decoding did not succeed.
+
 This is another solution to problem that is also solved in https://github.com/anttiz/wav-to-morse
 
 <div align="center">

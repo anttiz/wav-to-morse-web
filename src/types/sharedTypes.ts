@@ -4,6 +4,8 @@ export interface IAudioToMorseParams {
   morseDihMaxPercentageOfDah: number;
   smallBreakPercentageOfWordBreak: number;
   charBreakPercentageOfWordBreak: number;
+  soundMinDuration: number;
+  soundMaxDuration: number;
 }
 
 export interface IProcessFileParams {
@@ -24,6 +26,7 @@ export interface IMorseWithTime {
 }
 
 export interface IAudioFileChannelData {
+  valid: boolean;
   secret: string;
   morse: MorseSequenceCharacter[];
   morseWithTime: IMorseWithTime[];
@@ -31,6 +34,7 @@ export interface IAudioFileChannelData {
 }
 
 export interface IAudioFileData {
+  valid: boolean;
   secret: string;
   file: File;
   morse: MorseSequenceCharacter[];

@@ -54,7 +54,7 @@ export class PlayComponent extends LitElement {
       }
       if (this.currentTime > this.audioData!.ab.duration) {
         this.stop();
-      } else {
+      } else if (this.audioData?.valid) {
         this.calculateCurrentSpot();
       }
     }, 1000);
